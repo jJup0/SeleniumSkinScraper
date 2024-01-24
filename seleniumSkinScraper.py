@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 cwd = os.path.dirname(__file__)
 
 op = webdriver.ChromeOptions()
-op.add_argument("headless")  # type: ignore # unknown
+# op.add_argument("headless")  # type: ignore # unknown
 driver: webdriver.Chrome = webdriver.Chrome(options=op)
 
 
@@ -25,97 +25,113 @@ def scrapeSkinPage(
     isKnife: bool,
     wearTypeDict: Mapping[str, tuple[str, int]],
 ):
-    for _ in range(nrOfPages):
-        time.sleep(0.5)
-        skins_web_elements = []
-        while not skins_web_elements:
-            no_more_items_elements = driver.find_elements(
-                By.CLASS_NAME, "market_listing_table_message"
-            )
-            if no_more_items_elements:
-                return
+    try:
+        for _ in range(nrOfPages):
+            time.sleep(0.5)
+            skins_web_elements = []
+            while not skins_web_elements:
+                no_more_items_elements = driver.find_elements(
+                    By.CLASS_NAME, "market_listing_table_message"
+                )
+                if no_more_items_elements:
+                    return
 
-            time.sleep(0.1)
-            skins_web_elements = driver.find_elements(
-                By.CLASS_NAME,
-                "market_listing_row.market_recent_listing_row.market_listing_searchresult",
-            )
+                time.sleep(0.1)
+                skins_web_elements = driver.find_elements(
+                    By.CLASS_NAME,
+                    "market_listing_row.market_recent_listing_row.market_listing_searchresult",
+                )
 
-        skinNames: list[str] = []
-        for skin in skins_web_elements:
-            skinNames.append(skin.get_attribute("data-hash-name"))  # type: ignore #unknown
-        knDisp = 2 if isKnife else 0  # knifes have start in their name
-        for i in range(len(skinNames)):
-            curS = skinNames[i]
-            isPainted = True
-            wearType = shortWearType = ""
-            for localwtype in wearTypes:
-                if curS.find(localwtype) != -1:
-                    wearType = localwtype
-                    shortWearType = wearTypeDict[wearType][0]
-                    break
-                isPainted = False
+            skinNames: list[str] = []
+            for skin in skins_web_elements:
+                skinNames.append(skin.get_attribute("data-hash-name"))  # type: ignore #unknown
+            knDisp = 2 if isKnife else 0  # knifes have start in their name
+            for i in range(len(skinNames)):
+                curS = skinNames[i]
+                isPainted = True
+                wearType = shortWearType = ""
+                for localwtype in wearTypes:
+                    if curS.find(localwtype) != -1:
+                        wearType = localwtype
+                        shortWearType = wearTypeDict[wearType][0]
+                        break
+                    isPainted = False
 
-            if isPainted:
-                if curS.find("StatTrak") != -1:
-                    curS = (
-                        curS[knDisp : 8 + knDisp]
-                        + curS[gtLen + knDisp + 12 : curS.find(wearType) - 2]
-                        + " "
-                        + shortWearType
-                    )  # include stattrak or souvenir in name, ignore weapon
-                elif curS.find("Souvenir") != -1:
-                    curS = (
-                        curS[:8]
-                        + curS[gtLen + 11 : curS.find(wearType) - 2]
-                        + " "
-                        + shortWearType
-                    )
+                if isPainted:
+                    if curS.find("StatTrak") != -1:
+                        curS = (
+                            curS[knDisp : 8 + knDisp]
+                            + curS[gtLen + knDisp + 12 : curS.find(wearType) - 2]
+                            + " "
+                            + shortWearType
+                        )  # include stattrak or souvenir in name, ignore weapon
+                    elif curS.find("Souvenir") != -1:
+                        curS = (
+                            curS[:8]
+                            + curS[gtLen + 11 : curS.find(wearType) - 2]
+                            + " "
+                            + shortWearType
+                        )
+                    else:
+                        curS = (
+                            curS[gtLen + knDisp + 3 : curS.find(wearType) - 2]
+                            + " "
+                            + shortWearType
+                        )
                 else:
-                    curS = (
-                        curS[gtLen + knDisp + 3 : curS.find(wearType) - 2]
-                        + " "
-                        + shortWearType
-                    )
-            else:
-                if curS.find("StatTrak") != -1:
-                    curS = (
-                        curS[knDisp : 8 + knDisp]
-                        + curS[gtLen + knDisp + 12 : curS.find(wearType) - 2]
-                    )
-                else:
-                    curS = curS[knDisp:]
+                    if curS.find("StatTrak") != -1:
+                        curS = (
+                            curS[knDisp : 8 + knDisp]
+                            + curS[gtLen + knDisp + 12 : curS.find(wearType) - 2]
+                        )
+                    else:
+                        curS = curS[knDisp:]
 
-            skinNames[i] = curS
+                skinNames[i] = curS
 
-        skinPrices: list[float] = []
-        skinPricesWE = driver.find_elements(By.CLASS_NAME, "normal_price")
-        for spWE in skinPricesWE:
-            skinPrice = spWE.get_attribute("data-price")  # type: ignore #unknown
-            if skinPrice:
-                skinPrices.append(int(skinPrice) / 100)
+            skinPrices: list[float] = []
+            skinPricesWE = driver.find_elements(By.CLASS_NAME, "normal_price")
+            for spWE in skinPricesWE:
+                skinPrice = spWE.get_attribute("data-price")  # type: ignore #unknown
+                if skinPrice:
+                    skinPrices.append(int(skinPrice) / 100)
 
-        for name, price in zip(skinNames, skinPrices, strict=True):
-            skinsDict[name] = price
+            for name, price in zip(skinNames, skinPrices, strict=True):
+                skinsDict[name] = price
 
-        try:
-            lastItemNr = driver.find_element(By.ID, "searchResults_end")
-            totalItemNr = driver.find_element(By.ID, "searchResults_total")
-            if lastItemNr.get_attribute("innerHTML") == totalItemNr.get_attribute("innerHTML"):  # type: ignore #unknown
-                print("Scraped last page")
-                break
-        except:
-            print("Something went wrong, probably no results")
-        for _ in range(10):
-            # try to click 10 times
             try:
-                nextPageButtonWE = driver.find_element(By.ID, "searchResults_btn_next")
-                # print(nextPageButtonWE.get_attribute('innerHTML'))
-                nextPageButtonWE.click()
-                print("Continuing to next page")
-            except selenium.common.exceptions.ElementClickInterceptedException:
-                print("Failed to click, trying again")
-                pass
+                lastItemNr = driver.find_element(By.ID, "searchResults_end")
+                totalItemNr = driver.find_element(By.ID, "searchResults_total")
+                if lastItemNr.get_attribute("innerHTML") == totalItemNr.get_attribute("innerHTML"):  # type: ignore #unknown
+                    print("Scraped last page")
+                    break
+            except:
+                print("Something went wrong, probably no results")
+            click_attempt = 0
+            for click_attempt in range(5):
+                # try to click 10 times
+                try:
+                    nextPageButtonWE = driver.find_element(
+                        By.ID, "searchResults_btn_next"
+                    )
+                    # print(nextPageButtonWE.get_attribute('innerHTML'))
+                    nextPageButtonWE.click()
+                    print("Continuing to next page")
+                except selenium.common.exceptions.ElementClickInterceptedException:
+                    print("Failed to click, trying again")
+                    reject_cookies_button = driver.find_elements(
+                        By.ID, "rejectAllButton"
+                    )
+                    if reject_cookies_button:
+                        reject_cookies_button[0].click()
+                    pass
+            if click_attempt == 4:
+                print("failed to click 5 times, saving html")
+                with open("temp.html", "wb") as f:
+                    f.write(driver.page_source.encode("utf-8", "ignore"))
+
+    except KeyboardInterrupt:
+        pass
     return skinsDict
 
 
