@@ -1,5 +1,6 @@
-temp.py
+temp.html
 last_page.html
 *.pyc
 old_files/
 csv_files/
+venv/
