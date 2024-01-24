@@ -3,6 +3,8 @@
 Scrape the steam market for the current prices of csgo skins and get results stored in a csv file
 It uses tkinter for a "native" gui and selenium for webscraping. \
 
+[Screenshot of the GUI](docs/gui.png)
+
 ## Disclaimers
 
 This is an old project that I only revived to the point where it is working again, but it is very scrappy. \
