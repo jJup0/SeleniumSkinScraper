@@ -506,7 +506,12 @@ def formatSkinDetails():
 lastButtonPressed = None
 # row -1
 versionLabel = tk.Label(
-    scwindow, text="v0.8", font=("Bahnschriftt", 8), background=bgColor, padx=0, pady=0
+    scwindow,
+    text="v0.8.1",
+    font=("Bahnschriftt", 8),
+    background=bgColor,
+    padx=0,
+    pady=0,
 )
 versionLabel.place(rely=1, relx=0, anchor="sw")
 # row 0

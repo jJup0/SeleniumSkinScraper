@@ -1,24 +1,18 @@
 import csv
 import datetime
 import os
-import sys
 import time
 from typing import Any, Mapping
 
+import selenium.common.exceptions
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 cwd = os.path.dirname(__file__)
 
-
-def setupDriver(site_name: str):
-    op = webdriver.ChromeOptions()
-    op.add_argument("headless")  # type: ignore # unknown
-    driver: webdriver.Chrome = webdriver.Chrome(options=op)
-
-    driver.get(site_name)
-    print(f"fetching {site_name}")
-    return driver
+op = webdriver.ChromeOptions()
+op.add_argument("headless")  # type: ignore # unknown
+driver: webdriver.Chrome = webdriver.Chrome(options=op)
 
 
 def scrapeSkinPage(
@@ -39,7 +33,6 @@ def scrapeSkinPage(
                 By.CLASS_NAME, "market_listing_table_message"
             )
             if no_more_items_elements:
-                driver.close()
                 return
 
             time.sleep(0.1)
@@ -102,30 +95,27 @@ def scrapeSkinPage(
             if skinPrice:
                 skinPrices.append(int(skinPrice) / 100)
 
-        if len(skinPrices) != len(skinNames):
-            sys.exit("DIFFERENT AMOUNT OF SKINS AND PRICES")
-
-        for name, price in zip(skinNames, skinPrices):
+        for name, price in zip(skinNames, skinPrices, strict=True):
             skinsDict[name] = price
 
         try:
             lastItemNr = driver.find_element(By.ID, "searchResults_end")
             totalItemNr = driver.find_element(By.ID, "searchResults_total")
             if lastItemNr.get_attribute("innerHTML") == totalItemNr.get_attribute("innerHTML"):  # type: ignore #unknown
-                print("last page")
+                print("Scraped last page")
                 break
-            else:
-                print("not last page")
         except:
-            print("prob no results")
-        try:
-            nextPageButtonWE = driver.find_element(By.ID, "searchResults_btn_next")
-            # print(nextPageButtonWE.get_attribute('innerHTML'))
-            nextPageButtonWE.click()
-        except:
-            print("shid")
-            break
-    driver.close()
+            print("Something went wrong, probably no results")
+        for _ in range(10):
+            # try to click 10 times
+            try:
+                nextPageButtonWE = driver.find_element(By.ID, "searchResults_btn_next")
+                # print(nextPageButtonWE.get_attribute('innerHTML'))
+                nextPageButtonWE.click()
+                print("Continuing to next page")
+            except selenium.common.exceptions.ElementClickInterceptedException:
+                print("Failed to click, trying again")
+                pass
     return skinsDict
 
 
@@ -171,7 +161,7 @@ def generalScrape(
 ):
     print("*" * 100)
     print("*" * 100)
-    maxPages = 1
+    maxPages = 10
     wnLen = len(weaponName)
     # print(weaponName)
     # print(wnLen)
@@ -186,7 +176,7 @@ def generalScrape(
     skinsDict = {"Row": 0, "Time": currentDT}
 
     print("Starting Browser...")
-    driver = setupDriver(skinLink)
+    driver.get(skinLink)
     print("Scraping Pages...")
     skinsDict = scrapeSkinPage(
         weaponName,
