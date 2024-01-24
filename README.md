@@ -3,7 +3,7 @@
 Scrape the steam market for the current prices of csgo skins and get results stored in a csv file
 It uses tkinter for a "native" gui and selenium for webscraping. \
 
-[Screenshot of the GUI](docs/gui.png)
+![Screenshot of the GUI](docs/gui.png)
 
 ## Disclaimers
 
@@ -13,4 +13,5 @@ This is an old project that I only revived to the point where it is working agai
 - Once you press "Scrape" the GUI becomes unresponsive, as the codebase is entirely synchronous.
 - A lot of feedback is only given via the console, instead of the GUI
 - Seemingly randomly the error "There was an error performing your search. Please try again later." occurs, which seems to be steams way of blocking bot requests.
+- There is barely any documentation nor comments, and I am afraid I will leave it that way.
 - probably many more issues...
