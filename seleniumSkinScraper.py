@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 cwd = os.path.dirname(__file__)
 
 op = webdriver.ChromeOptions()
-# op.add_argument("headless")  # type: ignore # unknown
+op.add_argument("headless")  # type: ignore # unknown
 driver: webdriver.Chrome = webdriver.Chrome(options=op)
 
 
